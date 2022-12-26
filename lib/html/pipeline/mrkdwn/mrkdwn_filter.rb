@@ -40,15 +40,15 @@ module HTML
         \1
       /x.freeze
 
-      IGNORE_PARENTS = %w[pre code].to_set
+      IGNORE_PARENTS = %w[pre code a].to_set
 
       ELEMENTS = {
         multiline_code: %w[```],
         blockquote: %w[&gt;],
-        line_break: %W[\n \r\n],
-        emoji: %w[:],
         mention: %w[@ # !],
         link: %w[&lt;],
+        line_break: %W[\n \r\n],
+        emoji: %w[:],
         style: %w[` * _ ~]
       }.freeze
 
