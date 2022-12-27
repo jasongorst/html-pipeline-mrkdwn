@@ -15,11 +15,9 @@ module HTML
     class Mrkdwn < Filter
       MULTILINE_CODE_PATTERN = /```(.+?)```/m.freeze
 
+      CODE_PATTERN = /`(?=\S)(.+?)(?<=\S)`/.freeze
+
       BLOCKQUOTE_PATTERN = /(^&gt;[^\n]*\n?)+/.freeze
-
-      LINE_BREAK_PATTERN = /\n/.freeze
-
-      EMOJI_PATTERN = /:([\w+-]+):/.freeze
 
       MENTION_PATTERN = /
         &lt;
@@ -34,6 +32,10 @@ module HTML
         &gt;
       /x.freeze
 
+      LINE_BREAK_PATTERN = /\n/.freeze
+
+      EMOJI_PATTERN = /:([\w+-]+):/.freeze
+
       STYLE_PATTERN = /
         ([`*_~])
         (?=\S)(.+?)(?<=\S)
@@ -44,18 +46,19 @@ module HTML
 
       ELEMENTS = {
         multiline_code: %w[```],
+        code: %w[`],
         blockquote: %w[&gt;],
         mention: %w[@ # !],
         link: %w[&lt;],
         line_break: %W[\n \r\n],
         emoji: %w[:],
-        style: %w[` * _ ~]
+        style: %w[* _ ~]
       }.freeze
 
       def initialize(doc, context = nil, result = nil)
         super(doc, context, result)
 
-        @emoji_image_tag = ->(emoji) { emoji }
+        @emoji_image_tag = ->(emoji) { "<img src=\"#{emoji.image_filename}\" alt=\"#{emoji.name}\" class=\"emoji\">" }
         @slack_channels = {}
         @slack_users = {}
 
@@ -104,8 +107,8 @@ module HTML
         end
       end
 
-      def call_filter(sym, content)
-        method = "#{sym}_filter".to_sym
+      def call_filter(filter_name, content)
+        method = "#{filter_name}_filter".to_sym
         send method, content
       end
 
@@ -114,6 +117,18 @@ module HTML
           text = Regexp.last_match[1].chomp
 
           "<pre>#{text}</pre>"
+        end
+      end
+
+      def code_filter(content)
+        content.gsub CODE_PATTERN do |match|
+          text = Regexp.last_match[1]
+
+          if text&.match(/\A[`]+\Z/) # ignore runs of backquotes
+            match
+          else
+            "<code>#{text}</code>"
+          end
         end
       end
 
@@ -126,35 +141,19 @@ module HTML
         end
       end
 
-      def line_break_filter(content)
-        content.gsub(LINE_BREAK_PATTERN, "<br>")
-      end
-
-      def emoji_filter(content)
-        content.gsub(EMOJI_PATTERN) do |match|
-          emoji = Emoji.find_by_alias(Regexp.last_match[1])
-
-          if emoji
-            emoji.raw || context.dig(:emoji_image_tag)&.call(emoji) || match
-          else
-            match
-          end
-        end
-      end
-
       def mention_filter(content)
         content.gsub MENTION_PATTERN do |match|
           mention = Regexp.last_match[1]
 
           (text, klass, prefix) =
             case mention
-            when /\A#(C.+)\Z/ # slack channel
+            when /\A#(C.+)\Z/ # slack channels
               [context.dig(:slack_channels, Regexp.last_match[1]) || Regexp.last_match[1], "channel", "#"]
 
-            when /\A@([UB].+)\Z/ # slack user or bot
+            when /\A@([UB].+)\Z/ # slack users or bots
               [context.dig(:slack_users, Regexp.last_match[1]) || Regexp.last_match[1], "user", "@"]
 
-            when /\A!(here|channel|everyone)\Z/ # special mention
+            when /\A!(here|channel|everyone)\Z/ # special mentions
               [Regexp.last_match[1], "mention", "@"]
             else
               nil
@@ -177,17 +176,31 @@ module HTML
         end
       end
 
+      def line_break_filter(content)
+        content.gsub(LINE_BREAK_PATTERN, "<br>")
+      end
+
+      def emoji_filter(content)
+        content.gsub(EMOJI_PATTERN) do |match|
+          emoji = Emoji.find_by_alias(Regexp.last_match[1])
+
+          if emoji
+            emoji.raw || context.dig(:emoji_image_tag)&.call(emoji) || match
+          else
+            match
+          end
+        end
+      end
+
       def style_filter(content)
         content.gsub STYLE_PATTERN do |match|
           style = Regexp.last_match[1]
           text = Regexp.last_match[2]
 
-          if text&.match(/\A[#{style}]+\Z/) # ignore runs of repeated style characters
+          if text&.match(/\A[#{style}]+\Z/) # ignore runs of style delimiters
             match
           else
             case style
-            when "`"
-              "<code>#{text}</code>"
             when "*"
               "<strong>#{style_filter(text)}</strong>"
             when "_"
