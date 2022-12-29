@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.4] - 2022-12-28
+
+- Move pipeline.rb into /helpers
+
 ## [0.1.3] - 2022-12-28
 
 - Remove bundler from bin/mrkdwn

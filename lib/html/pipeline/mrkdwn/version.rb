@@ -3,7 +3,7 @@
 module HTML
   class Pipeline
     class Mrkdwn < Filter
-      VERSION = "0.1.3"
+      VERSION = "0.1.4"
     end
   end
 end
