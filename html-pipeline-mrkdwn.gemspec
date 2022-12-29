@@ -39,6 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "html-pipeline", "~> 2.14.3"
 
   spec.add_development_dependency "rspec", "~> 3.12.0"
+  spec.add_development_dependency "simplecov", "~> 0.22.0"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

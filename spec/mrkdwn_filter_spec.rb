@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "rspec"
-require_relative "../pipeline"
+require_relative "../lib/html/pipeline/mrkdwn/helpers/pipeline"
 
 RSpec.describe "HTML::Pipeline::Mrkdwn" do
   it "has a version number" do
