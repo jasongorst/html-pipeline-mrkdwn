@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-require "html/pipeline"
 require "gemoji"
 
 module HTML
   class Pipeline
     # HTML Filter for converting Slack's `mrkdwn` markup language.
-    #https://api.slack.com/reference/surfaces/formatting#basics
+    # https://api.slack.com/reference/surfaces/formatting#basics
     #
     # Context options:
     #   :emoji_image_tag - a Proc that returns an `img` tag for custom Emoji
@@ -124,7 +123,7 @@ module HTML
         content.gsub CODE_PATTERN do |match|
           text = Regexp.last_match[1]
 
-          if text&.match(/\A[`]+\Z/) # ignore runs of backquotes
+          if text&.match(/\A`+\Z/) # ignore runs of backquotes
             match
           else
             "<code>#{text}</code>"
@@ -148,10 +147,10 @@ module HTML
           (text, klass, prefix) =
             case mention
             when /\A#(C.+)\Z/ # slack channels
-              [context.dig(:slack_channels, Regexp.last_match[1]) || Regexp.last_match[1], "channel", "#"]
+              [@slack_channels.dig(Regexp.last_match[1]) || Regexp.last_match[1], "channel", "#"]
 
             when /\A@([UB].+)\Z/ # slack users or bots
-              [context.dig(:slack_users, Regexp.last_match[1]) || Regexp.last_match[1], "user", "@"]
+              [@slack_users.dig(Regexp.last_match[1]) || Regexp.last_match[1], "user", "@"]
 
             when /\A!(here|channel|everyone)\Z/ # special mentions
               [Regexp.last_match[1], "mention", "@"]
@@ -185,7 +184,7 @@ module HTML
           emoji = Emoji.find_by_alias(Regexp.last_match[1])
 
           if emoji
-            emoji.raw || context.dig(:emoji_image_tag)&.call(emoji) || match
+            emoji.raw || @emoji_image_tag.call(emoji) || match
           else
             match
           end
