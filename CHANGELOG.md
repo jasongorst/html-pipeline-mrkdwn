@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.6] - 2023-01-19
+
+- Add test_helper.rb
+- Move all dev deps from Gemfile to gemspec
+- Switch test filename convention to test_*
+
+## [0.1.5] - 2023-01-17
+
+- Add *.gem to .gitignore
+- Switch from RSpec to Minitest
+
 ## [0.1.4] - 2022-12-28
 
 - Move pipeline.rb into /helpers
