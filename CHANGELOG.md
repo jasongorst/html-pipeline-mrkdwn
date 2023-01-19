@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.7] - 2023-01-19
+
+- Fix superclass in version.rb
+
 ## [0.1.6] - 2023-01-19
 
 - Add test_helper.rb
