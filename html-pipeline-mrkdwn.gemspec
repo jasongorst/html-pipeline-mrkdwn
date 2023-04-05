@@ -32,13 +32,13 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "escape_utils", "~> 1.3.0"
-  spec.add_dependency "gemoji", "~> 4.0.1"
-  spec.add_dependency "html-pipeline", "~> 2.14.3"
+  spec.add_dependency "escape_utils", "~> 1.3"
+  spec.add_dependency "gemoji", "~> 4.1"
+  spec.add_dependency "html-pipeline", "~> 2.14"
 
-  spec.add_development_dependency "bundler", "~> 2.4.4"
-  spec.add_development_dependency "minitest", "~> 5.17.0"
-  spec.add_development_dependency "minitest-rg", "~> 5.2.0"
-  spec.add_development_dependency "rake", "~> 13.0.6"
-  spec.add_development_dependency "rubocop", "~> 1.43.0"
+  spec.add_development_dependency "bundler", "~> 2.4.10"
+  spec.add_development_dependency "minitest", "~> 5.18"
+  spec.add_development_dependency "minitest-reporters", "~> 1.6"
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rubocop", "~> 1.49"
 end
