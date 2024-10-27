@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.author = "Jason Gorst"
   spec.email = "jason.gorst@me.com"
 
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.2.0"
 
   spec.license = "MIT"
 
@@ -36,9 +36,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "gemoji", "~> 4.1"
   spec.add_dependency "html-pipeline", "~> 2.14"
 
-  spec.add_development_dependency "bundler", "~> 2.4.10"
-  spec.add_development_dependency "minitest", "~> 5.18"
-  spec.add_development_dependency "minitest-reporters", "~> 1.6"
+  spec.add_development_dependency "bundler", "~> 2.5.22"
+  spec.add_development_dependency "minitest", "~> 5.25"
+  spec.add_development_dependency "minitest-reporters", "~> 1.7"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rubocop", "~> 1.49"
+  spec.add_development_dependency "rubocop", "~> 1.67"
 end
