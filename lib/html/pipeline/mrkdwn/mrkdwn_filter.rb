@@ -33,7 +33,7 @@ module HTML
 
       LINE_BREAK_PATTERN = /\n/.freeze
 
-      EMOJI_PATTERN = /:([\w+-]+):/.freeze
+      EMOJI_PATTERN = /:([\w+-_]+):/.freeze
 
       STYLE_PATTERN = /
         ([`*_~])
@@ -55,7 +55,7 @@ module HTML
       }.freeze
 
       def initialize(doc, context = nil, result = nil)
-        super(doc, context, result)
+        super
 
         @emoji_image_tag = ->(emoji) { "<img src=\"#{emoji.image_filename}\" alt=\"#{emoji.name}\" class=\"emoji\">" }
         @slack_channels = {}
@@ -107,7 +107,7 @@ module HTML
       end
 
       def call_filter(filter_name, content)
-        method = "#{filter_name}_filter".to_sym
+        method = :"#{filter_name}_filter"
         send method, content
       end
 
@@ -147,10 +147,10 @@ module HTML
           (text, klass, prefix) =
             case mention
             when /\A#(C.+)\Z/ # slack channels
-              [@slack_channels.dig(Regexp.last_match[1]) || Regexp.last_match[1], "channel", "#"]
+              [@slack_channels[Regexp.last_match[1]] || Regexp.last_match[1], "channel", "#"]
 
             when /\A@([UB].+)\Z/ # slack users or bots
-              [@slack_users.dig(Regexp.last_match[1]) || Regexp.last_match[1], "user", "@"]
+              [@slack_users[Regexp.last_match[1]] || Regexp.last_match[1], "user", "@"]
 
             when /\A!(here|channel|everyone)\Z/ # special mentions
               [Regexp.last_match[1], "mention", "@"]
