@@ -12,6 +12,8 @@ module HTML
     #   :slack_channels - a hash of Slack channel ids and channel names
     #   :slack_users - a hash of Slack user or bot ids and display names
     class Mrkdwn < Filter
+      attr_reader :large_emoji
+
       MULTILINE_CODE_PATTERN = /```(.+?)```/m.freeze
 
       CODE_PATTERN = /`(?=\S)(.+?)(?<=\S)`/.freeze
@@ -33,7 +35,11 @@ module HTML
 
       LINE_BREAK_PATTERN = /\n/.freeze
 
-      EMOJI_PATTERN = /:([\w+-_]+):/.freeze
+      EMOJI_PATTERN = /:([\w+-_]+?):/.freeze
+
+      EMOJI_AND_WHITESPACE_PATTERN = /(?::[\w+-_]+?:|\s)+/.freeze
+
+      NON_CAPTURING_EMOJI_PATTERN = /:[\w+-_]+?:/.freeze
 
       STYLE_PATTERN = /
         ([`*_~])
@@ -57,16 +63,23 @@ module HTML
       def initialize(doc, context = nil, result = nil)
         super
 
-        @emoji_image_tag = ->(emoji) { "<img src=\"#{emoji.image_filename}\" alt=\"#{emoji.name}\" class=\"emoji\">" }
-        @slack_channels = {}
-        @slack_users = {}
+        default_emoji_image_tag = ->(emoji) { "<img src=\"#{emoji.image_filename}\" alt=\"#{emoji.name}\" class=\"emoji\">" }
 
-        @emoji_image_tag = @context[:emoji_image_tag] if @context[:emoji_image_tag]
-        @slack_channels = @context[:slack_channels] if @context[:slack_channels]
-        @slack_users = @context[:slack_users] if @context[:slack_users]
+        @emoji_image_tag = @context[:emoji_image_tag] || default_emoji_image_tag
+        @large_emoji_image_tag = @context[:large_emoji_image_tag] || @emoji_image_tag
+        @large_emoji_class = @context[:large_emoji_class] || "emoji-lg"
+        @slack_channels = @context[:slack_channels] || {}
+        @slack_users = @context[:slack_users] || {}
       end
 
       def call
+        div = doc.at_css("div")
+
+        if wants_large_emoji?(div.content)
+          @large_emoji = true
+          div.add_class(@large_emoji_class)
+        end
+
         ELEMENTS.each do |element, includes|
           process_text_nodes(includes) { |content| call_filter(element, content) }
         end
@@ -78,6 +91,11 @@ module HTML
         if context[:emoji_image_tag] && !context[:emoji_image_tag].is_a?(Proc)
           raise ArgumentError,
                 "context[:emoji_image_tag] should return a Proc that takes an Emoji object as in the 'gemoji' gem."
+        end
+
+        if context[:large_emoji_image_tag] && !context[:large_emoji_image_tag].is_a?(Proc)
+          raise ArgumentError,
+                "context[:large_emoji_image_tag] should return a Proc that takes an Emoji object as in the 'gemoji' gem."
         end
 
         if context[:slack_channels] && !context[:slack_channels].is_a?(Hash)
@@ -184,7 +202,15 @@ module HTML
           emoji = Emoji.find_by_alias(Regexp.last_match[1])
 
           if emoji
-            emoji.raw || @emoji_image_tag.call(emoji) || match
+            if emoji.custom?
+              if @large_emoji
+                @large_emoji_image_tag.call(emoji)
+              else
+                @emoji_image_tag.call(emoji)
+              end
+            else
+              emoji.raw
+            end
           else
             match
           end
@@ -211,6 +237,22 @@ module HTML
             end
           end
         end
+      end
+
+      private
+
+      def only_emoji_and_whitespace?(string)
+        matchdata = EMOJI_AND_WHITESPACE_PATTERN.match(string)
+
+        matchdata && matchdata[0] == string
+      end
+
+      def emoji_count(string)
+        string.scan(NON_CAPTURING_EMOJI_PATTERN).size
+      end
+
+      def wants_large_emoji?(string)
+        only_emoji_and_whitespace?(string) && emoji_count(string).between?(1, 23)
       end
     end
   end
