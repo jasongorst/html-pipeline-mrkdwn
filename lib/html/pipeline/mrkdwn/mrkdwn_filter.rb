@@ -14,6 +14,10 @@ module HTML
     class Mrkdwn < Filter
       attr_reader :large_emoji
 
+      EMOJI_AND_WHITESPACE_PATTERN = /(?::[\w+-_]+?:|\s)+/.freeze
+
+      NON_CAPTURING_EMOJI_PATTERN = /:[\w+-_]+?:/.freeze
+
       MULTILINE_CODE_PATTERN = /```(.+?)```/m.freeze
 
       CODE_PATTERN = /`(?=\S)(.+?)(?<=\S)`/.freeze
@@ -37,10 +41,6 @@ module HTML
 
       EMOJI_PATTERN = /:([\w+-_]+?):/.freeze
 
-      EMOJI_AND_WHITESPACE_PATTERN = /(?::[\w+-_]+?:|\s)+/.freeze
-
-      NON_CAPTURING_EMOJI_PATTERN = /:[\w+-_]+?:/.freeze
-
       STYLE_PATTERN = /
         ([`*_~])
         (?=\S)(.+?)(?<=\S)
@@ -57,7 +57,8 @@ module HTML
         link: %w[&lt;],
         line_break: %W[\n \r\n],
         emoji: %w[:],
-        style: %w[* _ ~]
+        style: %w[* _ ~],
+        unescape: %w[&amp;lowbar;]
       }.freeze
 
       def initialize(doc, context = nil, result = nil)
@@ -201,18 +202,16 @@ module HTML
         content.gsub(EMOJI_PATTERN) do |match|
           emoji = Emoji.find_by_alias(Regexp.last_match[1])
 
-          if emoji
-            if emoji.custom?
-              if @large_emoji
-                @large_emoji_image_tag.call(emoji)
-              else
-                @emoji_image_tag.call(emoji)
-              end
+          if emoji&.custom?
+            if @large_emoji
+              @large_emoji_image_tag.call(emoji)
             else
-              emoji.raw
+              @emoji_image_tag.call(emoji)
             end
+          elsif emoji
+            emoji.raw
           else
-            match
+            match.gsub(/_/, "&lowbar;")
           end
         end
       end
@@ -237,6 +236,10 @@ module HTML
             end
           end
         end
+      end
+
+      def unescape_filter(content)
+        content.gsub("&amp;lowbar;", "_")
       end
 
       private
